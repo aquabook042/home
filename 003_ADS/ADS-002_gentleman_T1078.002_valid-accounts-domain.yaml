@@ -1,0 +1,100 @@
+id: ADS-002
+title: "Valid Accounts: Domain Accounts - VPN Credential Harvesting & Reuse"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1078.002"
+  name: "Valid Accounts: Domain Accounts"
+  url: "https://attack.mitre.org/techniques/T1078/002"
+platform:
+  - "Windows"
+  - "Network"
+phase: "Persistence / Privilege Escalation / Defense Evasion / Initial Access"
+
+description: |
+  CVE-2024-55591 による FortiGate super_admin アクセス取得後、The Gentlemen は
+  VPN 接続ユーザーの認証情報を収集・再利用し、内部ネットワークへの永続アクセスを確立する。
+  既存のドメインアカウントを悪用するか、特権ドメインアカウントを新規作成する。
+
+attack_procedure: |
+  # ステップ 1: FortiGate 管理コンソールから VPN 設定・ユーザーリストを抽出
+  # /api/v2/cmdb/vpn.ssl/settings を参照し VPN ユーザー情報を取得
+
+  # ステップ 2: 取得した資格情報で VPN 接続
+  # 正規のユーザーとして内部ネットワークに接続
+
+  # ステップ 3: ドメインアカウントの列挙
+  net user /domain
+  net group "Domain Admins" /domain
+
+  # ステップ 4: 新規特権アカウントの作成 (永続化)
+  net user <username> <password> /add /domain
+  net group "Domain Admins" <username> /add /domain
+
+  # ステップ 5: AnyDesk を通じた C2 チャネルの確立 (-> ADS-003 参照)
+
+tools_used:
+  - name: "FortiGate 管理 API"
+    description: "VPN 認証情報の収集"
+  - name: "net.exe"
+    description: "ドメインアカウント列挙・作成 (Windows 標準ツール)"
+
+detection:
+  log_sources:
+    - "Windows Security Event Log (Domain Controller)"
+    - "FortiGate VPN Logs"
+    - "Active Directory Audit Logs"
+    - "SIEM"
+  expected_events:
+    - "EventID 4720: ユーザーアカウントの作成"
+    - "EventID 4728: セキュリティグループへのメンバー追加 (Domain Admins)"
+    - "EventID 4624: 不審な送信元 IP からのログオン成功 (Logon Type 3/10)"
+    - "EventID 4648: 明示的資格情報を使用したログオン"
+    - "FortiGate VPN: 通常と異なる時間帯・IP からの接続成功"
+  detection_rule: |
+    title: New Domain Admin Account Created - Potential Threat Actor Activity
+    id: a1b2c3d4-0002-0002-0002-000000000002
+    status: experimental
+    description: Detects creation of new accounts and immediate addition to Domain Admins
+    logsource:
+      product: windows
+      service: security
+    detection:
+      account_created:
+        EventID: 4720
+      admin_added:
+        EventID: 4728
+        GroupName: 'Domain Admins'
+      timeframe: 5m
+      condition: account_created | near admin_added
+    falsepositives:
+      - Legitimate IT provisioning workflows
+    level: high
+    tags:
+      - attack.persistence
+      - attack.t1078.002
+
+  mitigations:
+    - "特権アカウント管理 (PAM) ソリューションの導入"
+    - "ドメイン管理者アカウントへの MFA 強制"
+    - "VPN 接続に対する異常検知 (地理的位置、時間帯)"
+    - "最小権限原則の適用 (不要な特権アカウントの削除)"
+    - "AD における Privileged Access Workstation (PAW) の利用"
+
+ioc:
+  hashes: []
+  ip_addresses: []
+  file_names: []
+  notes: "新規ドメイン管理者アカウントの作成、および通常とは異なる IP からの VPN 接続に注意"
+
+references:
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "Microsoft Security Blog"
+    url: "https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/"
+  - source: "MITRE ATT&CK T1078.002"
+    url: "https://attack.mitre.org/techniques/T1078/002"

@@ -1,0 +1,118 @@
+id: ADS-009
+title: "Data from Network Shared Drive - Sensitive Data Collection for Double Extortion"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1039"
+  name: "Data from Network Shared Drive"
+  url: "https://attack.mitre.org/techniques/T1039"
+platform:
+  - "Windows"
+phase: "Collection"
+
+description: |
+  The Gentlemen はランサムウェア実行前に、内部ネットワーク共有から機密ファイルを収集する。
+  財務記録、個人識別情報 (PII)、知的財産、認証情報などの高価値データをターゲットにし、
+  ダブルエクストーション (ファイル暗号化 + データ公開脅迫) のためのレバレッジとして使用する。
+
+attack_procedure: |
+  # ステップ 1: ネットワーク共有の列挙
+  net view /all
+  net use * /delete
+  # 主要サーバーの共有をマウント
+  net use Z: \\<fileserver>\<share> /user:<domain>\<admin> <password>
+
+  # ステップ 2: 高価値ファイルの検索とコピー
+  # 財務・会計ファイル
+  robocopy Z:\ C:\exfil\ *.xlsx *.xls *.csv /E /R:1 /W:0
+  # 文書ファイル
+  robocopy Z:\ C:\exfil\ *.docx *.doc *.pdf *.pptx /E /R:1 /W:0
+  # 設計・技術文書
+  robocopy Z:\ C:\exfil\ *.dwg *.sql *.bak /E /R:1 /W:0
+
+  # ステップ 3: 特定のキーワードでのファイル検索
+  dir /s /b Z:\*password* Z:\*credential* Z:\*finance* Z:\*confidential*
+
+  # ステップ 4: 収集したデータをステージングディレクトリに集約
+  xcopy Z:\ C:\Temp\exfil\ /E /H /C /I /Y
+  # または 7-Zip での圧縮 (送出前)
+  7z.exe a C:\Temp\data.7z C:\Temp\exfil\ -p<password>
+
+tools_used:
+  - name: "robocopy.exe"
+    description: "Windows 標準のファイルコピーツール"
+  - name: "xcopy.exe"
+    description: "Windows 標準のファイルコピーツール"
+  - name: "7-Zip"
+    description: "データ圧縮ツール (送出前の圧縮に使用)"
+  - name: "net.exe"
+    description: "ネットワーク共有のマウント"
+
+detection:
+  log_sources:
+    - "Windows Security Event Log"
+    - "ファイルサーバー監査ログ"
+    - "Sysmon"
+    - "NetFlow / DLP ソリューション"
+  expected_events:
+    - "EventID 5140: ネットワーク共有オブジェクトへのアクセス (大量)"
+    - "EventID 5145: ネットワーク共有オブジェクトのファイルアクセスチェック"
+    - "Sysmon EventID 11: 一時ディレクトリへの大量ファイル作成"
+    - "Sysmon EventID 1: robocopy.exe または xcopy.exe の異常な実行"
+    - "ファイルサーバー: 短時間の大量ファイルアクセス"
+    - "DLP: 大容量データの特定ディレクトリへの移動"
+  detection_rule: |
+    title: Mass File Access from Network Shares - Data Staging Indicator
+    id: a1b2c3d4-0009-0009-0009-000000000009
+    status: experimental
+    description: Detects mass file copying from network shares, indicative of data collection for exfiltration
+    logsource:
+      product: windows
+      category: process_creation
+    detection:
+      selection_robocopy:
+        Image|endswith: '\robocopy.exe'
+        CommandLine|contains:
+          - '\\'
+      selection_xcopy:
+        Image|endswith: '\xcopy.exe'
+        CommandLine|contains:
+          - '\\'
+      condition: selection_robocopy or selection_xcopy
+    falsepositives:
+      - Legitimate backup operations
+      - Authorized data migration
+    level: medium
+    tags:
+      - attack.collection
+      - attack.t1039
+
+  mitigations:
+    - "ファイルサーバーへのアクセスを最小権限で管理 (必要なユーザー・グループのみ)"
+    - "ファイルアクセス監査を有効化し SIEM で大量アクセスを検知"
+    - "DLP (Data Loss Prevention) ソリューションで大容量データ転送を監視"
+    - "ネットワーク共有のアクセスパターンをベースライン化し異常を検知"
+    - "データ分類ポリシーを実装し機密データへのアクセスを追加認証で保護"
+
+ioc:
+  hashes: []
+  file_names:
+    - "data.7z"
+  staging_paths:
+    - "C:\\Temp\\exfil\\"
+    - "C:\\ProgramData\\exfil\\"
+  notes: |
+    The Gentlemen はダブルエクストーションのため、暗号化前に機密データを収集する。
+    収集されたデータは SFTP/WinSCP で持ち出される (-> ADS-010 参照)。
+
+references:
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "Group-IB"
+    url: "https://www.group-ib.com/blog/hastalamuerte-gentlemen-raas-ttps/"
+  - source: "MITRE ATT&CK T1039"
+    url: "https://attack.mitre.org/techniques/T1039"

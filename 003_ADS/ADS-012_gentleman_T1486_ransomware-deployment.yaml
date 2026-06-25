@@ -1,0 +1,161 @@
+id: ADS-012
+title: "Data Encrypted for Impact - Golang Cross-Platform Ransomware Deployment"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1486"
+  name: "Data Encrypted for Impact"
+  url: "https://attack.mitre.org/techniques/T1486"
+platform:
+  - "Windows"
+  - "Linux"
+  - "ESXi"
+  - "NAS"
+  - "BSD"
+phase: "Impact"
+
+description: |
+  The Gentlemen の最終フェーズ。Golang ベースのクロスプラットフォームランサムウェアを
+  GPO/NETLOGON 経由でドメイン参加全ホストに一斉展開する。
+  ランサムウェアは実行時に 8 バイトのパスワードパラメータが必要 (アンチ解析措置)。
+  暗号化ファイルには .7mtzhh または .ojuopo 拡張子が付与される。
+  各ディレクトリに README-GENTLEMEN.txt ランサムノートが投下される。
+  SMB 経由で自己拡散する機能も持つ。
+
+attack_procedure: |
+  # ===== GPO 経由でのドメイン全体への一斉展開 =====
+  # (ADS-006 で準備した GPO/NETLOGON スタートアップスクリプトが起動時に実行)
+  # すべてのドメイン参加ホストの次回起動/グループポリシー更新時に実行
+
+  # ===== 手動実行 (サーバー・ESXi への直接実行) =====
+  # Windows ターゲット
+  \\<DC>\NETLOGON\gentlemen.exe <8-byte-password>
+  # または
+  gentlemen_win64.exe <8-byte-password>
+
+  # Linux ターゲット
+  ./gentlemen_linux64 <8-byte-password>
+
+  # ESXi ターゲット
+  ./gentlemen_esxi <8-byte-password>
+
+  # ===== ランサムウェアの動作 =====
+  # 1. 実行時パスワードパラメータの検証 (存在しない場合は実行拒否)
+  # 2. ターゲットディレクトリの再帰スキャン
+  # 3. ファイルを暗号化し .7mtzhh または .ojuopo 拡張子を付与
+  # 4. 各ディレクトリに README-GENTLEMEN.txt を投下
+  # 5. SMB 経由でネットワーク上の他ホストに自己拡散
+  # 6. (実行後) セルフデリートスクリプトでバイナリを削除
+
+ransom_note_content: |
+  # README-GENTLEMEN.txt の内容例
+  YOUR FILES HAVE BEEN ENCRYPTED.
+
+  Victim ID: <unique_id>
+
+  To restore your files, contact us:
+  TOX ID: <TOX_contact_id>
+
+  DO NOT try to recover files yourself - you will lose them permanently.
+  DO NOT contact law enforcement - your data will be published.
+
+tools_used:
+  - name: "Gentlemen Ransomware"
+    description: "Golang ベースのクロスプラットフォームランサムウェア"
+  - name: "GPO / NETLOGON"
+    description: "ドメイン全体への配布メカニズム"
+
+detection:
+  log_sources:
+    - "EDR テレメトリ"
+    - "Windows Security Event Log"
+    - "Sysmon"
+    - "ファイルシステム監視"
+    - "ネットワーク IDS/IPS"
+  expected_events:
+    - "Sysmon EventID 11: .7mtzhh または .ojuopo 拡張子のファイルが大量作成"
+    - "Sysmon EventID 11: README-GENTLEMEN.txt が各ディレクトリに作成"
+    - "Sysmon EventID 1: 未知の実行ファイル (.exe) の実行 (NETLOGON 共有から)"
+    - "ファイルシステム: 短時間での大量ファイル変更・拡張子変更"
+    - "ネットワーク: SMB スキャン・接続 (自己拡散)"
+    - "EventID 7045: 新規サービスのインストール (自己拡散の一環)"
+  detection_rule: |
+    title: Gentlemen Ransomware - Encrypted File Extension Detection
+    id: a1b2c3d4-0012-0012-0012-000000000012
+    status: experimental
+    description: Detects file encryption activity by The Gentlemen ransomware based on known file extensions and ransom note
+    logsource:
+      product: windows
+      category: file_event
+    detection:
+      selection_extension:
+        TargetFilename|endswith:
+          - '.7mtzhh'
+          - '.ojuopo'
+      selection_ransom_note:
+        TargetFilename|endswith: 'README-GENTLEMEN.txt'
+      condition: selection_extension or selection_ransom_note
+    falsepositives:
+      - None expected
+    level: critical
+    tags:
+      - attack.impact
+      - attack.t1486
+
+  additional_detection: |
+    title: Mass File Modification - Potential Ransomware Activity
+    description: Detects mass file modification events indicative of ransomware encryption
+    logsource:
+      product: windows
+      category: file_event
+    detection:
+      selection:
+        EventType: 'RenameNewName'
+      timeframe: 60s
+      condition: selection | count() > 100
+    level: critical
+
+  mitigations:
+    - "ランサムウェア展開前の各フェーズでの検知・遮断が最も重要 (ADS-001〜011 参照)"
+    - "3-2-1 バックアップルールの遵守 (オフプレミスコピーを含む)"
+    - "EDR でのランサムウェア振る舞い検知の有効化"
+    - "ネットワークセグメンテーションで横展開・自己拡散を制限"
+    - "NETLOGON 共有への不審な実行ファイルの配置を監視 (ADS-006 参照)"
+    - "インシデントレスポンス計画の策定と定期的な演習"
+
+ioc:
+  hashes:
+    - sha256: "1848fa2af5371d00bc4f0346ae1f5afd843677ca87de377a3f7b2433c0b7b187"
+      name: "Gentlemen Ransomware - Sample 1"
+    - sha256: "e0ba5641d4ebc6292c44b817c7cc0f74aa8fcf416006bbe27b194d2cc773bef5"
+      name: "Gentlemen Ransomware - Sample 2"
+    - sha256: "f4ae346deaf87fffdbba0086a29c00819df99cfb380bd08f1da60e45e76b1b63"
+      name: "Gentlemen Ransomware - Sample 3"
+    - sha256: "22b38dad7da097ea03aa28d0614164cd25fafeb1383dbc15047e34c8050f6f67"
+      name: "Gentlemen Ransomware - Sample 5"
+  file_extensions:
+    - ".7mtzhh"
+    - ".ojuopo"
+  file_names:
+    - "README-GENTLEMEN.txt"
+  notes: |
+    ランサムウェアは実行時に 8 バイトパスワードを要求するアンチ解析措置を実装。
+    TOX プロトコルを使用した匿名通信で身代金交渉を実施。
+
+references:
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "Huntress"
+    url: "https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps"
+  - source: "Microsoft Security Blog"
+    url: "https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/"
+  - source: "Group-IB"
+    url: "https://www.group-ib.com/blog/hastalamuerte-gentlemen-raas-ttps/"
+  - source: "FortiGuard"
+    url: "https://www.fortiguard.com/threat-actor/6387/the-gentlemen-ransomware"
+  - source: "MITRE ATT&CK T1486"
+    url: "https://attack.mitre.org/techniques/T1486"

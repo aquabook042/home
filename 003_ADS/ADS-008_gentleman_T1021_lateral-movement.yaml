@@ -1,0 +1,143 @@
+id: ADS-008
+title: "Remote Services: Lateral Movement - RDP / SMB-PsExec / SSH"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  - id: "T1021.001"
+    name: "Remote Services: Remote Desktop Protocol"
+    url: "https://attack.mitre.org/techniques/T1021/001"
+  - id: "T1021.002"
+    name: "Remote Services: SMB/Windows Admin Shares"
+    url: "https://attack.mitre.org/techniques/T1021/002"
+  - id: "T1021.004"
+    name: "Remote Services: SSH"
+    url: "https://attack.mitre.org/techniques/T1021/004"
+platform:
+  - "Windows"
+  - "Linux"
+  - "ESXi"
+phase: "Lateral Movement"
+
+description: |
+  The Gentlemen は RDP (T1021.001)、PsExec over SMB (T1021.002)、SSH/PuTTY (T1021.004) を使用して
+  環境全体に横展開する。Windows サーバー、Linux ホスト、VMware ESXi システムを侵害し、
+  バックアップサーバーとドメインコントローラーにフットホールドを確立する。
+
+attack_procedure: |
+  # ===== RDP によるラテラルムーブメント (T1021.001) =====
+  # ステップ 1: ターゲット Windows ホストへの RDP 接続
+  mstsc /v:<target_ip>:3389
+
+  # Pass-the-Hash for RDP (Restricted Admin Mode)
+  # mimikatz.exe "sekurlsa::pth /user:<user> /domain:<domain> /ntlm:<hash> /run:mstsc.exe /restrictedadmin"
+
+  # ===== PsExec over SMB によるリモートコマンド実行 (T1021.002) =====
+  # ステップ 2: PsExec を使用した横移動と任意コマンド実行
+  PsExec.exe \\<target_ip> -u <domain>\<admin_user> -p <password> cmd.exe
+  PsExec.exe \\<target_ip> -u <domain>\<admin_user> -p <password> -c <ransomware.exe> <8-byte-pass>
+
+  # 複数ターゲットへの一斉実行
+  PsExec.exe @targets.txt -u <domain>\<admin_user> -p <password> <command>
+
+  # ===== SSH/PuTTY によるラテラルムーブメント (T1021.004) =====
+  # ステップ 3: Linux/ESXi ホストへの SSH 接続
+  # putty.exe -ssh <username>@<linux_target_ip> -pw <password>
+  ssh <username>@<esxi_host_ip>
+
+  # ESXi での操作
+  # esxcli vm process list
+  # esxcli vm process kill --type=soft --world-id=<id>
+
+tools_used:
+  - name: "mstsc.exe"
+    description: "Windows 標準 RDP クライアント"
+  - name: "PsExec.exe"
+    description: "Microsoft Sysinternals リモート実行ツール"
+  - name: "PuTTY"
+    description: "SSH クライアント (Linux/ESXi へのアクセス)"
+
+detection:
+  log_sources:
+    - "Windows Security Event Log"
+    - "Sysmon"
+    - "ファイアウォール/ネットワークログ"
+    - "Linux/ESXi Syslog"
+  expected_events:
+    - "EventID 4624: ネットワークログオン成功 (Logon Type 3) - 不審な送信元から"
+    - "EventID 4648: 明示的資格情報を使用したログオン"
+    - "EventID 4776: 資格情報の検証 (RDP ログオン)"
+    - "Sysmon EventID 1: PsExec.exe の実行"
+    - "Sysmon EventID 3: 445/TCP 接続 (SMB) + PsExec パイプ作成"
+    - "Sysmon EventID 17/18: PsExec 名前付きパイプの作成 (PSEXESVC)"
+    - "Linux: /var/log/auth.log に不審な SSH ログイン"
+    - "RDP EventID 21/24/25: TerminalServices-LocalSessionManager のイベント"
+  detection_rule: |
+    title: PsExec Remote Execution - Lateral Movement Indicator
+    id: a1b2c3d4-0008-0008-0008-000000000008
+    status: experimental
+    description: Detects PsExec usage for lateral movement as used by The Gentlemen
+    logsource:
+      product: windows
+      category: process_creation
+    detection:
+      selection_psexec:
+        ParentImage|endswith: '\PSEXESVC.exe'
+      selection_psexec_service:
+        Image|endswith: '\PSEXESVC.exe'
+      condition: selection_psexec or selection_psexec_service
+    falsepositives:
+      - Legitimate IT administration using PsExec
+    level: medium
+    tags:
+      - attack.lateral_movement
+      - attack.t1021.002
+
+  additional_detection: |
+    title: Suspicious RDP Lateral Movement - Unusual Source/Target
+    description: Detects RDP connections that deviate from normal patterns
+    logsource:
+      product: windows
+      service: security
+    detection:
+      selection:
+        EventID: 4624
+        LogonType: 10
+      filter_normal:
+        SubjectUserName: 'SYSTEM'
+      condition: selection and not filter_normal
+    level: low
+
+  mitigations:
+    - "RDP へのアクセスを VPN 経由または特定 IP に制限"
+    - "PsExec の実行を Application Control でブロック"
+    - "SMB へのアクセスをホストベースファイアウォールで制限"
+    - "ネットワークセグメンテーションで東西通信を制限"
+    - "SSH キー認証のみを使用し、パスワード認証を無効化"
+    - "特権アカウントの使用をセキュアな管理ホストに限定 (PAW)"
+    - "LAPS でローカル管理者パスワードを管理"
+
+ioc:
+  hashes: []
+  file_names:
+    - "PsExec.exe"
+    - "PSEXESVC.exe"
+    - "putty.exe"
+  notes: |
+    PsExec はターゲットホストに PSEXESVC.exe サービスをインストールし実行する。
+    これは検知の重要なアーティファクトとなる。
+
+references:
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "Huntress"
+    url: "https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps"
+  - source: "MITRE ATT&CK T1021.001"
+    url: "https://attack.mitre.org/techniques/T1021/001"
+  - source: "MITRE ATT&CK T1021.002"
+    url: "https://attack.mitre.org/techniques/T1021/002"
+  - source: "MITRE ATT&CK T1021.004"
+    url: "https://attack.mitre.org/techniques/T1021/004"

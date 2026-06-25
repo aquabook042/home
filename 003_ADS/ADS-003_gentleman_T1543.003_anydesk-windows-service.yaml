@@ -1,0 +1,106 @@
+id: ADS-003
+title: "Create or Modify System Process: Windows Service - AnyDesk Persistence"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1543.003"
+  name: "Create or Modify System Process: Windows Service"
+  url: "https://attack.mitre.org/techniques/T1543/003"
+platform:
+  - "Windows"
+phase: "Persistence / Privilege Escalation"
+
+description: |
+  The Gentlemen は AnyDesk (正規のリモートデスクトップソフトウェア) を Windows サービスとして
+  インストールし、再起動後もユーザーログオフ後も持続するリモートアクセスを確立する。
+  これによりオペレーション全体を通じて信頼性の高い C2 チャネルを維持する。
+
+attack_procedure: |
+  # ステップ 1: AnyDesk バイナリをターゲットシステムにドロップ
+  # (例: C:\ProgramData\AnyDesk\AnyDesk.exe)
+
+  # ステップ 2: AnyDesk を Windows サービスとしてインストール
+  AnyDesk.exe --install "C:\ProgramData\AnyDesk" --start-with-win
+
+  # または sc コマンドを使用して直接サービスを作成
+  sc create AnyDesk binpath= "C:\ProgramData\AnyDesk\AnyDesk.exe --service" start= auto
+  sc start AnyDesk
+
+  # ステップ 3: AnyDesk のアンアテンデッドアクセスパスワードを設定
+  # レジストリまたは設定ファイル経由でパスワードを設定
+  # HKLM\SOFTWARE\AnyDesk\ad.security.unattended_password
+
+  # ステップ 4: ファイアウォール例外を追加 (必要に応じて)
+  netsh advfirewall firewall add rule name="AnyDesk" dir=in action=allow program="C:\ProgramData\AnyDesk\AnyDesk.exe" enable=yes
+
+tools_used:
+  - name: "AnyDesk"
+    description: "正規のリモートデスクトップソフトウェア (LOLBin として悪用)"
+  - name: "sc.exe"
+    description: "Windows サービス管理ツール"
+  - name: "netsh.exe"
+    description: "Windows ファイアウォール設定"
+
+detection:
+  log_sources:
+    - "Windows Security Event Log"
+    - "Windows System Event Log"
+    - "Sysmon"
+    - "EDR テレメトリ"
+  expected_events:
+    - "EventID 7045: 新規サービスのインストール (サービス名: AnyDesk)"
+    - "Sysmon EventID 1: AnyDesk.exe --service または --install オプションでの起動"
+    - "Sysmon EventID 13: AnyDesk 関連のレジストリ変更"
+    - "ネットワーク接続: AnyDesk リレーサーバー (relay.anydesk.com) への接続"
+    - "EventID 4697: システムにサービスがインストールされた"
+  detection_rule: |
+    title: AnyDesk Installed as Windows Service - Potential Backdoor
+    id: a1b2c3d4-0003-0003-0003-000000000003
+    status: experimental
+    description: Detects AnyDesk being installed as a persistent Windows service outside standard deployment paths
+    logsource:
+      product: windows
+      service: system
+    detection:
+      selection:
+        EventID: 7045
+        ServiceName: 'AnyDesk'
+      filter_standard:
+        ImagePath|contains:
+          - 'C:\Program Files\AnyDesk'
+          - 'C:\Program Files (x86)\AnyDesk'
+      condition: selection and not filter_standard
+    falsepositives:
+      - Legitimate IT remote support deployments
+    level: high
+    tags:
+      - attack.persistence
+      - attack.t1543.003
+
+  mitigations:
+    - "リモートデスクトップツールの使用を承認済みソリューションに限定するポリシーを策定"
+    - "AnyDesk、TeamViewer 等の未承認 RMM ツールの通信をブロック"
+    - "新規 Windows サービスのインストールを監視・アラート"
+    - "Application Control (WDAC/AppLocker) でサービスのインストールを制限"
+    - "ProgramData 配下からの実行ファイル起動を監視"
+
+ioc:
+  hashes: []
+  ip_addresses: []
+  file_names:
+    - "AnyDesk.exe"
+  notes: |
+    標準インストールパス以外 (例: C:\ProgramData\AnyDesk) への AnyDesk 配置に注意。
+    サービスとして登録された場合は即時調査が必要。
+
+references:
+  - source: "Huntress"
+    url: "https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps"
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "MITRE ATT&CK T1543.003"
+    url: "https://attack.mitre.org/techniques/T1543/003"

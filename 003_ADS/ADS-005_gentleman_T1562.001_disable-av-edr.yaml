@@ -1,0 +1,120 @@
+id: ADS-005
+title: "Impair Defenses: Disable or Modify Tools - AV/EDR Kill via ThrottleBlood"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1562.001"
+  name: "Impair Defenses: Disable or Modify Tools"
+  url: "https://attack.mitre.org/techniques/T1562/001"
+platform:
+  - "Windows"
+phase: "Defense Evasion"
+
+description: |
+  ThrottleBlood.sys カーネルドライバから取得したカーネル特権を使用して、
+  The Gentlemen はすべての AV/EDR プロセスを強制終了する。
+  さらに Windows Defender のグローバル除外設定、リアルタイム保護の無効化、
+  Defender のキャッシュ・プリフェッチのクリーニングを実行する。
+
+attack_procedure: |
+  # ステップ 1: AV/EDR プロセスの強制終了 (カーネルドライバ経由)
+  # All.exe / Allpatch2.exe が ThrottleBlood.sys を使用して保護プロセスを終了
+
+  # ステップ 2: Windows Defender グローバル除外の設定
+  powershell -Command "Add-MpPreference -ExclusionPath 'C:\'"
+  powershell -Command "Add-MpPreference -ExclusionPath 'D:\'"
+  powershell -Command "Add-MpPreference -ExclusionProcess '*'"
+
+  # ステップ 3: リアルタイム保護の無効化
+  powershell -Command "Set-MpPreference -DisableRealtimeMonitoring $true"
+  powershell -Command "Set-MpPreference -DisableBehaviorMonitoring $true"
+  powershell -Command "Set-MpPreference -DisableIOAVProtection $true"
+  powershell -Command "Set-MpPreference -DisableScriptScanning $true"
+
+  # ステップ 4: Defender キャッシュ・プリフェッチのクリーニング
+  del /f /q "%ProgramData%\Microsoft\Windows Defender\Scans\mpenginedb.db"
+
+  # ステップ 5: レジストリ経由でのDefender無効化
+  reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender" /v "DisableAntiSpyware" /t REG_DWORD /d 1 /f
+  reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection" /v "DisableRealtimeMonitoring" /t REG_DWORD /d 1 /f
+
+tools_used:
+  - name: "All.exe / Allpatch2.exe"
+    description: "ThrottleBlood.sys を使用したカスタム AV Killer"
+  - name: "PowerShell"
+    description: "Windows Defender 設定変更"
+  - name: "reg.exe"
+    description: "Defender ポリシーのレジストリ操作"
+
+detection:
+  log_sources:
+    - "Windows Security Event Log"
+    - "Microsoft-Windows-Windows Defender/Operational"
+    - "Sysmon"
+    - "PowerShell Script Block Logging"
+    - "EDR テレメトリ"
+  expected_events:
+    - "EventID 5001: Windows Defender リアルタイム保護が無効化された"
+    - "EventID 5007: Windows Defender 設定が変更された"
+    - "PowerShell: Add-MpPreference または Set-MpPreference コマンドの実行"
+    - "Sysmon EventID 13: Defender 関連レジストリキーの変更"
+    - "Sysmon EventID 1: powershell.exe -DisableRealtimeMonitoring パラメータ"
+    - "EDR: セキュリティプロセスの突然の終了"
+  detection_rule: |
+    title: Windows Defender Disabled via PowerShell - Gentleman RaaS TTP
+    id: a1b2c3d4-0005-0005-0005-000000000005
+    status: experimental
+    description: Detects disabling of Windows Defender protection mechanisms via PowerShell as used by The Gentlemen
+    logsource:
+      product: windows
+      category: ps_script
+    detection:
+      selection:
+        ScriptBlockText|contains:
+          - 'Set-MpPreference'
+          - 'Add-MpPreference'
+      disable_keywords:
+        ScriptBlockText|contains:
+          - 'DisableRealtimeMonitoring'
+          - 'DisableBehaviorMonitoring'
+          - 'DisableIOAVProtection'
+          - 'ExclusionPath'
+          - 'ExclusionProcess'
+      condition: selection and disable_keywords
+    falsepositives:
+      - Legitimate security tool configuration in controlled environments
+    level: high
+    tags:
+      - attack.defense_evasion
+      - attack.t1562.001
+
+  mitigations:
+    - "Tamper Protection を有効化 (Windows Defender が自身を保護)"
+    - "WDAC (Windows Defender Application Control) でのプロセス保護"
+    - "Defender 設定変更の監視・アラート (EventID 5007)"
+    - "PowerShell Constrained Language Mode の適用"
+    - "カーネルドライバロードの監視 (ADS-004 参照)"
+    - "Defender ポリシーを GPO で集中管理し、ローカル変更を禁止"
+
+ioc:
+  hashes:
+    - sha256: "eb3bc08e16d1e7c048aef7ffe3298186f452ce57c6301463d9cdab55af2b4f83"
+      name: "All.exe / Allpatch2.exe"
+  file_names:
+    - "All.exe"
+    - "Allpatch2.exe"
+  registry_keys:
+    - "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\DisableAntiSpyware"
+    - "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender\\Real-Time Protection\\DisableRealtimeMonitoring"
+
+references:
+  - source: "Huntress"
+    url: "https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps"
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "MITRE ATT&CK T1562.001"
+    url: "https://attack.mitre.org/techniques/T1562/001"
