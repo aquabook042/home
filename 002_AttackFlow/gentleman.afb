@@ -1,0 +1,372 @@
+{
+  "$schema": "https://center-for-threat-informed-defense.github.io/attack-flow/schema/attack-flow-schema-2.0.0.json",
+  "type": "bundle",
+  "id": "bundle--af000000-0000-0000-0000-000000000001",
+  "spec_version": "2.1",
+  "created": "2026-06-25T00:00:00.000Z",
+  "modified": "2026-06-25T00:00:00.000Z",
+  "objects": [
+    {
+      "type": "extension-definition",
+      "id": "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4",
+      "spec_version": "2.1",
+      "created": "2022-08-02T19:34:35.143Z",
+      "modified": "2022-08-02T19:34:35.143Z",
+      "name": "Attack Flow",
+      "description": "Extends STIX 2.1 with features to create Attack Flows.",
+      "created_by_ref": "identity--d673f8cb-60b8-4b8c-b998-60b8b5e88e24",
+      "schema": "https://center-for-threat-informed-defense.github.io/attack-flow/schema/attack-flow-schema-2.0.0.json",
+      "version": "2.0.0",
+      "extension_types": ["new-sdo"],
+      "external_references": [
+        {
+          "source_name": "Documentation",
+          "url": "https://center-for-threat-informed-defense.github.io/attack-flow"
+        }
+      ]
+    },
+    {
+      "type": "attack-flow",
+      "spec_version": "2.1",
+      "id": "attack-flow--af000000-0000-0000-0000-000000000002",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "created_by_ref": "identity--af000000-0000-0000-0000-000000000099",
+      "name": "The Gentlemen Ransomware Attack Flow",
+      "description": "Attack flow for The Gentlemen RaaS operation. Covers the full kill chain from initial FortiGate compromise through double-extortion ransomware deployment. Based on Trend Micro (2025-09), Huntress (2026-05), and Microsoft (2026-05) incident analyses.",
+      "scope": "incident",
+      "start_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000010"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "identity",
+      "spec_version": "2.1",
+      "id": "identity--af000000-0000-0000-0000-000000000099",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Detection Engineering Workspace",
+      "identity_class": "organization"
+    },
+    {
+      "type": "attack-asset",
+      "id": "attack-asset--af000000-0000-0000-0000-000000000101",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Internet-Facing FortiGate Firewall",
+      "description": "FortiOS/FortiProxy appliance exposed to the internet. Vulnerable to CVE-2024-55591 authentication bypass.",
+      "object_ref": "infrastructure--af000000-0000-0000-0000-000000000201",
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-asset",
+      "id": "attack-asset--af000000-0000-0000-0000-000000000102",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Windows Domain (Active Directory)",
+      "description": "Corporate Windows AD environment. Targeted for lateral movement and GPO-based domain-wide ransomware deployment.",
+      "object_ref": "infrastructure--af000000-0000-0000-0000-000000000202",
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-asset",
+      "id": "attack-asset--af000000-0000-0000-0000-000000000103",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Network File Shares / Sensitive Data",
+      "description": "Internal file shares containing sensitive business data targeted for exfiltration prior to encryption.",
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "infrastructure",
+      "spec_version": "2.1",
+      "id": "infrastructure--af000000-0000-0000-0000-000000000201",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "FortiGate VPN/Firewall Appliance",
+      "infrastructure_types": ["network-device"],
+      "description": "CVE-2024-55591: Authentication bypass via WebSocket race condition. Grants unauthenticated super_admin access."
+    },
+    {
+      "type": "infrastructure",
+      "spec_version": "2.1",
+      "id": "infrastructure--af000000-0000-0000-0000-000000000202",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Active Directory Domain",
+      "infrastructure_types": ["workstation"],
+      "description": "Windows AD environment with domain controllers, workstations, and servers."
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000010",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Exploit Public-Facing Application",
+      "technique_id": "T1190",
+      "technique_ref": "attack-pattern--10001001-0000-0000-0000-000000000001",
+      "description": "Exploit CVE-2024-55591 on internet-exposed FortiGate appliance. Attacker sends specially crafted WebSocket requests exploiting a race condition and missing credential validation to obtain super_admin access without credentials.",
+      "confidence": 100,
+      "asset_refs": [
+        "attack-asset--af000000-0000-0000-0000-000000000101"
+      ],
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000020"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000020",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Valid Accounts: Domain Accounts",
+      "technique_id": "T1078.002",
+      "description": "Using admin access obtained via CVE-2024-55591, harvest VPN credentials and create/reuse privileged domain accounts for persistent access into the internal network.",
+      "confidence": 100,
+      "asset_refs": [
+        "attack-asset--af000000-0000-0000-0000-000000000102"
+      ],
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000030"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000030",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Create or Modify System Process: Windows Service (AnyDesk)",
+      "technique_id": "T1543.003",
+      "description": "Install AnyDesk as a persistent Windows service on an internal host. Provides reliable remote access that survives reboots and user logoffs. Used as primary C2 channel throughout the operation.",
+      "confidence": 100,
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000040"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000040",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Exploitation for Privilege Escalation (BYOVD)",
+      "technique_id": "T1068",
+      "description": "Deploy ThrottleBlood.sys (vulnerable kernel driver derived from ThrottleStop.sys) via All.exe or Allpatch2.exe. Exploit the driver to gain kernel-level privileges, enabling termination of protected AV/EDR processes.",
+      "confidence": 100,
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000050"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000050",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Impair Defenses: Disable or Modify Tools",
+      "technique_id": "T1562.001",
+      "description": "Using kernel privileges from ThrottleBlood.sys, terminate all AV/EDR processes. Set global Windows Defender exclusions, disable real-time protection, and clean Defender cache and prefetch artifacts.",
+      "confidence": 100,
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000060"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000060",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Domain Policy Modification: Group Policy Modification",
+      "technique_id": "T1484.001",
+      "description": "Modify domain GPOs to disable security controls across all domain-joined hosts simultaneously. Stage ransomware payload in NETLOGON share for domain-wide deployment via GPO startup scripts.",
+      "confidence": 100,
+      "asset_refs": [
+        "attack-asset--af000000-0000-0000-0000-000000000102"
+      ],
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000070"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000070",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Network Service Discovery",
+      "technique_id": "T1046",
+      "description": "Run Advanced IP Scanner and Nmap to enumerate all live hosts, open ports, and services on the internal network. Identify high-value targets including servers, ESXi hosts, NAS devices, and domain controllers.",
+      "confidence": 100,
+      "asset_refs": [
+        "attack-asset--af000000-0000-0000-0000-000000000102"
+      ],
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000080"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000080",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Lateral Movement (RDP / SMB-PsExec / SSH)",
+      "technique_id": "T1021.001",
+      "description": "Spread across the environment using RDP (T1021.001), PsExec over SMB (T1021.002), and SSH/PuTTY (T1021.004). Compromise Windows servers, Linux hosts, and VMware ESXi systems. Establish footholds on backup servers and domain controllers.",
+      "confidence": 100,
+      "asset_refs": [
+        "attack-asset--af000000-0000-0000-0000-000000000102"
+      ],
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000090"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000090",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Data from Network Shared Drive",
+      "technique_id": "T1039",
+      "description": "Collect sensitive files and documents from internal network shares. Target high-value data including financial records, PII, intellectual property, and credentials for double-extortion leverage.",
+      "confidence": 100,
+      "asset_refs": [
+        "attack-asset--af000000-0000-0000-0000-000000000103"
+      ],
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000100"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000100",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Exfiltration Over Alternative Protocol (WinSCP/SFTP)",
+      "technique_id": "T1048.001",
+      "description": "Exfiltrate collected data to attacker-controlled infrastructure using WinSCP over SFTP/SCP. Encrypted transfer blends with legitimate traffic.",
+      "confidence": 100,
+      "asset_refs": [
+        "attack-asset--af000000-0000-0000-0000-000000000103"
+      ],
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000110"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000110",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Data Destruction (VSS Deletion & Log Clearing)",
+      "technique_id": "T1485",
+      "description": "Delete all Volume Shadow Copies via 'vssadmin delete shadows /all' and 'wmic shadowcopy delete'. Forcibly terminate backup services, database services, and AV services. Clear Security/System/Application event logs via wevtutil. Delete RDP logs. Run self-delete batch script to remove attacker tooling.",
+      "confidence": 100,
+      "effect_refs": [
+        "attack-action--af000000-0000-0000-0000-000000000120"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    },
+    {
+      "type": "attack-action",
+      "id": "attack-action--af000000-0000-0000-0000-000000000120",
+      "spec_version": "2.1",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Data Encrypted for Impact",
+      "technique_id": "T1486",
+      "description": "Deploy Golang-based cross-platform ransomware encryptor via GPO/NETLOGON to all domain hosts simultaneously. Ransomware requires 8-byte password parameter at runtime. Encrypted files receive .7mtzhh or .ojuopo extension. README-GENTLEMEN.txt dropped in every directory with victim ID and TOX contact for ransom negotiation.",
+      "confidence": 100,
+      "asset_refs": [
+        "attack-asset--af000000-0000-0000-0000-000000000102",
+        "attack-asset--af000000-0000-0000-0000-000000000103"
+      ],
+      "extensions": {
+        "extension-definition--fb9c968a-745b-4ade-9b25-c324172197f4": {
+          "extension_type": "new-sdo"
+        }
+      }
+    }
+  ]
+}
