@@ -1,0 +1,678 @@
+{
+  "type": "bundle",
+  "id": "bundle--f1a2b3c4-d5e6-7890-abcd-ef1234567890",
+  "spec_version": "2.1",
+  "created": "2026-06-25T00:00:00.000Z",
+  "modified": "2026-06-25T00:00:00.000Z",
+  "objects": [
+    {
+      "type": "threat-actor",
+      "spec_version": "2.1",
+      "id": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "The Gentlemen",
+      "description": "The Gentlemen is a Ransomware-as-a-Service (RaaS) operation that emerged in mid-2025. The group conducts double-extortion attacks — encrypting victim files and threatening to publish stolen data. The ransomware binary is written in Golang and targets Windows, Linux, ESXi, NAS, and BSD environments. Suspected to operate from Russian-speaking regions based on a prohibition against targeting CIS countries.",
+      "threat_actor_types": ["crime-syndicate"],
+      "aliases": ["Gentleman", "Gentlemen RaaS", "Hastalamuerte"],
+      "first_seen": "2025-08-01T00:00:00.000Z",
+      "last_seen": "2026-05-28T00:00:00.000Z",
+      "sophistication": "advanced",
+      "resource_level": "organization",
+      "primary_motivation": "financial-gain",
+      "secondary_motivations": ["organizational-gain"],
+      "goals": ["Financial gain via ransomware and data extortion"],
+      "labels": ["ransomware", "raas", "double-extortion"],
+      "external_references": [
+        {
+          "source_name": "Trend Micro",
+          "description": "Unmasking The Gentlemen Ransomware: Tactics, Techniques, and Procedures Revealed",
+          "url": "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+        },
+        {
+          "source_name": "Huntress",
+          "description": "The Gentleman Ransomware | Defense Evasion TTPs Uncovered",
+          "url": "https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps"
+        },
+        {
+          "source_name": "Microsoft Security Blog",
+          "description": "The Gentlemen ransomware: Dissecting a self-propagating Go encryptor",
+          "url": "https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/"
+        },
+        {
+          "source_name": "Group-IB",
+          "description": "How Hastalamuerte Operates: Group-IB's Analysis of The Gentlemen's Attack Methods",
+          "url": "https://www.group-ib.com/blog/hastalamuerte-gentlemen-raas-ttps/"
+        },
+        {
+          "source_name": "FortiGuard",
+          "url": "https://www.fortiguard.com/threat-actor/6387/the-gentlemen-ransomware"
+        }
+      ]
+    },
+    {
+      "type": "malware",
+      "spec_version": "2.1",
+      "id": "malware--b2c3d4e5-f6a7-8901-bcde-234567890abc",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Ransomware",
+      "description": "Golang-based cross-platform ransomware encryptor. Requires an 8-byte password parameter at runtime as an anti-analysis measure. Appends .7mtzhh or .ojuopo extension to encrypted files and drops README-GENTLEMEN.txt ransom notes. Self-propagating via SMB and GPO.",
+      "malware_types": ["ransomware"],
+      "is_family": false,
+      "architecture_execution_envs": ["x86-64"],
+      "implementation_languages": ["go"],
+      "capabilities": ["encrypts-files", "exfil-data", "kills-av-software", "self-propagates"],
+      "labels": ["ransomware", "golang", "cross-platform"]
+    },
+    {
+      "type": "malware",
+      "spec_version": "2.1",
+      "id": "malware--c1d2e3f4-a5b6-7890-1234-567890abcdef",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "ThrottleBlood.sys",
+      "description": "Custom BYOVD (Bring Your Own Vulnerable Driver) derived from ThrottleStop.sys. Exploited by All.exe and Allpatch2.exe to gain kernel privileges and terminate EDR/AV processes.",
+      "malware_types": ["rootkit"],
+      "is_family": false,
+      "labels": ["byovd", "av-killer", "kernel-driver"]
+    },
+    {
+      "type": "tool",
+      "spec_version": "2.1",
+      "id": "tool--c3d4e5f6-a7b8-9012-cdef-34567890abcd",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "AnyDesk",
+      "description": "Legitimate remote desktop software abused by The Gentlemen for persistent C2. Installed as a Windows service to survive reboots and user logoffs.",
+      "tool_types": ["remote-access"],
+      "labels": ["lolbin", "persistence", "c2"]
+    },
+    {
+      "type": "tool",
+      "spec_version": "2.1",
+      "id": "tool--d4e5f6a7-b8c9-0123-def0-4567890abcde",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "PsExec",
+      "description": "Microsoft Sysinternals tool used for lateral movement across Windows hosts.",
+      "tool_types": ["exploitation"],
+      "labels": ["lateral-movement", "lolbin"]
+    },
+    {
+      "type": "tool",
+      "spec_version": "2.1",
+      "id": "tool--e5f6a7b8-c9d0-1234-ef01-567890abcdef",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "WinSCP",
+      "description": "Legitimate SFTP/SCP client used by The Gentlemen for encrypted data exfiltration.",
+      "tool_types": ["exfiltration"],
+      "labels": ["exfiltration", "lolbin"]
+    },
+    {
+      "type": "tool",
+      "spec_version": "2.1",
+      "id": "tool--f6a7b8c9-d0e1-2345-f012-67890abcdef0",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "SystemBC",
+      "description": "SOCKS5 proxy malware used for tunneling and covert C2 communication.",
+      "tool_types": ["network"],
+      "labels": ["tunneling", "c2"]
+    },
+    {
+      "type": "vulnerability",
+      "spec_version": "2.1",
+      "id": "vulnerability--a7b8c9d0-e1f2-3456-0123-7890abcdef01",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "CVE-2024-55591",
+      "description": "Critical authentication bypass vulnerability in Fortinet FortiOS and FortiProxy. Allows an unauthenticated attacker to gain super_admin privileges via specially crafted WebSocket requests exploiting a race condition and missing credential validation. The Gentlemen maintain a database of ~14,700 already-compromised FortiGate devices.",
+      "external_references": [
+        {
+          "source_name": "cve",
+          "external_id": "CVE-2024-55591"
+        }
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000001",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Exploit Public-Facing Application",
+      "description": "The Gentlemen exploit CVE-2024-55591 on internet-facing FortiGate appliances to gain unauthenticated super_admin access.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1190", "url": "https://attack.mitre.org/techniques/T1190"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000002",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Create or Modify System Process: Windows Service",
+      "description": "AnyDesk is installed as a persistent Windows service to maintain remote access across reboots.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1543.003", "url": "https://attack.mitre.org/techniques/T1543/003"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000003",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Exploitation for Privilege Escalation",
+      "description": "BYOVD technique using ThrottleBlood.sys (derived from ThrottleStop.sys) to gain kernel-level privileges via All.exe / Allpatch2.exe.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1068", "url": "https://attack.mitre.org/techniques/T1068"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000004",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Impair Defenses: Disable or Modify Tools",
+      "description": "Custom AV killers (All.exe, Allpatch2.exe) terminate EDR/AV processes using ThrottleBlood.sys kernel driver. Global Defender exclusions set; real-time protection disabled; Defender cache and prefetch cleaned.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1562.001", "url": "https://attack.mitre.org/techniques/T1562/001"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000005",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Domain Policy Modification: Group Policy Modification",
+      "description": "Group Policy Objects (GPOs) modified to disable defenses domain-wide and facilitate mass ransomware deployment via NETLOGON payload staging.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1484.001", "url": "https://attack.mitre.org/techniques/T1484/001"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000006",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Network Service Discovery",
+      "description": "Advanced IP Scanner and Nmap used to map the internal network and identify targets for lateral movement.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1046", "url": "https://attack.mitre.org/techniques/T1046"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000007",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Remote Services: Remote Desktop Protocol",
+      "description": "RDP used for lateral movement to Windows hosts.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1021.001", "url": "https://attack.mitre.org/techniques/T1021/001"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000008",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Remote Services: SMB/Windows Admin Shares",
+      "description": "PsExec used over SMB for lateral movement and remote command execution across Windows hosts.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1021.002", "url": "https://attack.mitre.org/techniques/T1021/002"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000009",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Remote Services: SSH",
+      "description": "SSH (PuTTY) used for lateral movement to Linux and ESXi hosts.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1021.004", "url": "https://attack.mitre.org/techniques/T1021/004"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000010",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Data from Network Shared Drive",
+      "description": "Sensitive data collected from network shares prior to encryption.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1039", "url": "https://attack.mitre.org/techniques/T1039"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000011",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Exfiltration Over Alternative Protocol: Exfiltration Over Symmetric Encrypted Non-C2 Protocol",
+      "description": "WinSCP used to exfiltrate data over SFTP/SCP to attacker-controlled infrastructure.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1048.001", "url": "https://attack.mitre.org/techniques/T1048/001"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000012",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Indicator Removal: Clear Windows Event Logs",
+      "description": "Security, System, and Application event logs cleared via wevtutil. RDP logs also deleted.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1070.001", "url": "https://attack.mitre.org/techniques/T1070/001"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000013",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Data Destruction",
+      "description": "Volume Shadow Copies deleted via vssadmin and wmic. Backup/DB/AV services forcibly terminated. Self-delete batch script removes attacker tooling artifacts.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1485", "url": "https://attack.mitre.org/techniques/T1485"}
+      ]
+    },
+    {
+      "type": "attack-pattern",
+      "spec_version": "2.1",
+      "id": "attack-pattern--10001001-0000-0000-0000-000000000014",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Data Encrypted for Impact",
+      "description": "Golang-based cross-platform ransomware encrypts files and appends .7mtzhh or .ojuopo extension. Drops README-GENTLEMEN.txt with TOX contact. Requires 8-byte password parameter at runtime.",
+      "external_references": [
+        {"source_name": "mitre-attack", "external_id": "T1486", "url": "https://attack.mitre.org/techniques/T1486"}
+      ]
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000001",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Ransomware SHA256 - Sample 1",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:hashes.'SHA-256' = '1848fa2af5371d00bc4f0346ae1f5afd843677ca87de377a3f7b2433c0b7b187']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000002",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Ransomware SHA256 - Sample 2",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:hashes.'SHA-256' = 'e0ba5641d4ebc6292c44b817c7cc0f74aa8fcf416006bbe27b194d2cc773bef5']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000003",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Ransomware SHA256 - Sample 3",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:hashes.'SHA-256' = 'f4ae346deaf87fffdbba0086a29c00819df99cfb380bd08f1da60e45e76b1b63']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000004",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Ransomware SHA256 - Sample 4 (All.exe / Allpatch2.exe AV Killer)",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:hashes.'SHA-256' = 'eb3bc08e16d1e7c048aef7ffe3298186f452ce57c6301463d9cdab55af2b4f83']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000005",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Ransomware SHA256 - Sample 5",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:hashes.'SHA-256' = '22b38dad7da097ea03aa28d0614164cd25fafeb1383dbc15047e34c8050f6f67']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000006",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Ransom Note Filename",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:name = 'README-GENTLEMEN.txt']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000007",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Encrypted File Extension (.7mtzhh)",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:name MATCHES '\\.7mtzhh$']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000008",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Encrypted File Extension (.ojuopo)",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:name MATCHES '\\.ojuopo$']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000009",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen AV Killer Tool - Allpatch2.exe",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:name = 'Allpatch2.exe']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--11111111-0001-0000-0000-000000000010",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "name": "Gentlemen Vulnerable Driver - ThrottleBlood.sys",
+      "indicator_types": ["malicious-activity"],
+      "pattern": "[file:name = 'ThrottleBlood.sys']",
+      "pattern_type": "stix",
+      "valid_from": "2025-08-01T00:00:00.000Z"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000001",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "malware--b2c3d4e5-f6a7-8901-bcde-234567890abc"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000002",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "malware--c1d2e3f4-a5b6-7890-1234-567890abcdef"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000003",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "tool--c3d4e5f6-a7b8-9012-cdef-34567890abcd"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000004",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "tool--d4e5f6a7-b8c9-0123-def0-4567890abcde"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000005",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "tool--e5f6a7b8-c9d0-1234-ef01-567890abcdef"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000006",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "exploits",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "vulnerability--a7b8c9d0-e1f2-3456-0123-7890abcdef01"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000007",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000001"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000008",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000002"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000009",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000003"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000010",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000004"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000011",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000005"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000012",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000006"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000013",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000007"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000014",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000008"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000015",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000009"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000016",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000010"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000017",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000011"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000018",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000012"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000019",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000013"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000020",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "uses",
+      "source_ref": "threat-actor--a1b2c3d4-e5f6-7890-abcd-1234567890ab",
+      "target_ref": "attack-pattern--10001001-0000-0000-0000-000000000014"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000021",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--11111111-0001-0000-0000-000000000001",
+      "target_ref": "malware--b2c3d4e5-f6a7-8901-bcde-234567890abc"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000022",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--11111111-0001-0000-0000-000000000002",
+      "target_ref": "malware--b2c3d4e5-f6a7-8901-bcde-234567890abc"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000023",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--11111111-0001-0000-0000-000000000003",
+      "target_ref": "malware--b2c3d4e5-f6a7-8901-bcde-234567890abc"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000024",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--11111111-0001-0000-0000-000000000004",
+      "target_ref": "malware--c1d2e3f4-a5b6-7890-1234-567890abcdef"
+    },
+    {
+      "type": "relationship",
+      "spec_version": "2.1",
+      "id": "relationship--r0000001-0000-0000-0000-000000000025",
+      "created": "2026-06-25T00:00:00.000Z",
+      "modified": "2026-06-25T00:00:00.000Z",
+      "relationship_type": "indicates",
+      "source_ref": "indicator--11111111-0001-0000-0000-000000000005",
+      "target_ref": "malware--b2c3d4e5-f6a7-8901-bcde-234567890abc"
+    }
+  ]
+}
