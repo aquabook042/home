@@ -1,0 +1,126 @@
+id: ADS-007
+title: "Network Service Discovery - Internal Network Enumeration"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1046"
+  name: "Network Service Discovery"
+  url: "https://attack.mitre.org/techniques/T1046"
+platform:
+  - "Windows"
+  - "Linux"
+  - "Network"
+phase: "Discovery"
+
+description: |
+  The Gentlemen は Advanced IP Scanner と Nmap を使用して内部ネットワークをスキャンし、
+  すべてのライブホスト、オープンポート、サービスを列挙する。
+  高価値ターゲット (サーバー、ESXi ホスト、NAS デバイス、ドメインコントローラー) を特定し、
+  その後のラテラルムーブメントのターゲットリストを作成する。
+
+attack_procedure: |
+  # ステップ 1: Advanced IP Scanner による迅速なホスト探索
+  # GUI ツール、SMB/RDP/HTTP/HTTPS ポートを優先スキャン
+  # AdvancedIPScanner.exe -r 192.168.0.0-192.168.255.255
+
+  # ステップ 2: Nmap による詳細サービスポートスキャン
+  # よく使われるポートのスキャン
+  nmap -sV -sC -O -p 22,80,135,139,443,445,3389,5985,5986,8080 192.168.0.0/16 -oN scan_results.txt
+
+  # ステップ 3: SMB 共有の列挙
+  nmap --script smb-enum-shares -p 445 192.168.0.0/16
+
+  # ステップ 4: RDP が有効なホストの特定 (ラテラルムーブメントターゲット)
+  nmap -p 3389 --open 192.168.0.0/16 -oN rdp_hosts.txt
+
+  # ステップ 5: SSH が有効なホストの特定 (Linux/ESXi ターゲット)
+  nmap -p 22 --open 192.168.0.0/16 -oN ssh_hosts.txt
+
+  # ステップ 6: ESXi/vCenter の特定
+  nmap -p 443,902,9443 --open 192.168.0.0/16 -oN esxi_hosts.txt
+
+  # ステップ 7: net コマンドによる Windows ネットワーク探索
+  net view /all
+  net view /domain
+  arp -a
+
+tools_used:
+  - name: "Advanced IP Scanner"
+    description: "フリーウェアの IP ネットワークスキャナー"
+  - name: "Nmap"
+    description: "オープンソースのネットワーク探索ツール"
+  - name: "net.exe"
+    description: "Windows ネットワーク探索コマンド"
+  - name: "arp.exe"
+    description: "ARP テーブルの参照"
+
+detection:
+  log_sources:
+    - "Network IDS/IPS"
+    - "ファイアウォールログ"
+    - "Sysmon"
+    - "Windows Security Event Log"
+    - "NetFlow / パケットキャプチャ"
+  expected_events:
+    - "1つの送信元 IP から短時間に多数のポートへのスキャン"
+    - "RDP (3389), SMB (445), SSH (22) ポートへの広範なスキャン"
+    - "Sysmon EventID 1: nmap.exe または Advanced IP Scanner の実行"
+    - "大量のネットワーク接続試行 (Connection Refused / RST パケット)"
+    - "SMB 列挙: EventID 5140 (ネットワーク共有へのアクセス)"
+  detection_rule: |
+    title: Network Scanning Tool Execution - Nmap or Advanced IP Scanner
+    id: a1b2c3d4-0007-0007-0007-000000000007
+    status: experimental
+    description: Detects execution of network scanning tools commonly used by The Gentlemen for discovery
+    logsource:
+      product: windows
+      category: process_creation
+    detection:
+      selection_nmap:
+        Image|endswith: '\nmap.exe'
+      selection_ipscan:
+        Image|endswith: '\AdvancedIPScanner.exe'
+      selection_params:
+        CommandLine|contains:
+          - '-sV'
+          - '-sC'
+          - '--script smb'
+          - '-p 445'
+          - '-p 3389'
+      condition: selection_nmap or selection_ipscan or (1 of selection_params)
+    falsepositives:
+      - Authorized vulnerability scans by security team
+      - Network monitoring tools
+    level: medium
+    tags:
+      - attack.discovery
+      - attack.t1046
+
+  mitigations:
+    - "ネットワークセグメンテーションでラテラルムーブメントを制限"
+    - "不要なポートをホストベースファイアウォールでブロック"
+    - "IDS/IPS でポートスキャンパターンを検知・アラート"
+    - "ホスト間通信を最小権限ネットワークポリシーで制限"
+    - "EDR で nmap.exe や Advanced IP Scanner の実行を監視"
+
+ioc:
+  hashes: []
+  file_names:
+    - "nmap.exe"
+    - "AdvancedIPScanner.exe"
+    - "scan_results.txt"
+    - "rdp_hosts.txt"
+    - "ssh_hosts.txt"
+  notes: "スキャン結果ファイルがターゲットシステム上に残存する場合がある"
+
+references:
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "Huntress"
+    url: "https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps"
+  - source: "MITRE ATT&CK T1046"
+    url: "https://attack.mitre.org/techniques/T1046"

