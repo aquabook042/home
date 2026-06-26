@@ -1,0 +1,41 @@
+id: C0003
+title: "Domain Account Enumeration via net.exe"
+tactic: Discovery
+technique:
+  - id: T1078.002
+    name: "Valid Accounts: Domain Accounts"
+  - id: T1087.002
+    name: "Account Discovery: Domain Account"
+actor: "The Gentlemen"
+level: medium
+status: experimental
+date: 2026-06-26
+sigma_rule: "sigma-ADS-002-03_gentleman_net-domain-enumeration.yml"
+ads: "ADS-002_gentleman_T1078.002_valid-accounts-domain.yaml"
+
+description: |
+  Detects use of net.exe or net1.exe to enumerate domain user accounts or domain groups,
+  a reconnaissance technique used by The Gentlemen ransomware group after gaining initial
+  access via compromised FortiGate VPN credentials (ADS-002 / T1078.002).
+  Targeted commands: "net user /domain" and "net group ... /domain".
+
+indicators:
+  process:
+    image:
+      - '\net.exe'
+      - '\net1.exe'
+    commandline:
+      - pattern: "user /domain"
+        description: "Enumerate all domain user accounts"
+      - pattern: "group * /domain"
+        description: "Enumerate domain groups (e.g., Domain Admins)"
+
+falsepositives:
+  - IT administrators performing routine domain account audits
+  - Legitimate domain management scripts
+
+references:
+  - https://attack.mitre.org/techniques/T1078/002
+  - https://attack.mitre.org/techniques/T1087/002
+  - https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html
+  - https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/
