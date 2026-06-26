@@ -1,0 +1,29 @@
+title: "The Gentlemen - New Domain User Account Created"
+id: a1b2c3d4-0002-0001-0002-000000000002
+status: experimental
+description: |
+  Detects creation of new user accounts on a Domain Controller (EventID 4720).
+  The Gentlemen ransomware group creates new privileged domain accounts for persistent
+  access after compromising FortiGate VPN credentials (ADS-002 / T1078.002).
+  Monitor especially for accounts created outside business hours or by non-IT identities.
+references:
+  - https://attack.mitre.org/techniques/T1078/002
+  - https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html
+  - https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/
+author: "Claude (ADS-002 auto-generated)"
+date: 2026-06-26
+tags:
+  - attack.persistence
+  - attack.privilege_escalation
+  - attack.t1078.002
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 4720
+  condition: selection
+falsepositives:
+  - Legitimate IT provisioning workflows (onboarding new employees)
+  - Automated user provisioning systems
+level: high

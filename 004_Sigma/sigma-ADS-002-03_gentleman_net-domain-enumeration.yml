@@ -1,0 +1,41 @@
+title: "The Gentlemen - Domain Account Enumeration via net.exe"
+id: a1b2c3d4-0002-0003-0002-000000000002
+status: experimental
+description: |
+  Detects use of net.exe or net1.exe to enumerate domain user accounts or domain groups,
+  a reconnaissance technique used by The Gentlemen ransomware group after gaining initial
+  access via compromised FortiGate VPN credentials (ADS-002 / T1078.002).
+  Targeted commands: "net user /domain" and "net group ... /domain".
+references:
+  - https://attack.mitre.org/techniques/T1078/002
+  - https://attack.mitre.org/techniques/T1087/002
+  - https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html
+  - https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/
+author: "Claude (ADS-002 auto-generated)"
+date: 2026-06-26
+tags:
+  - attack.persistence
+  - attack.discovery
+  - attack.t1078.002
+  - attack.t1087.002
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_img:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+  selection_user_domain:
+    CommandLine|contains|all:
+      - 'user'
+      - '/domain'
+  selection_group_domain:
+    CommandLine|contains|all:
+      - 'group'
+      - '/domain'
+  condition: selection_img and (selection_user_domain or selection_group_domain)
+falsepositives:
+  - IT administrators performing routine domain account audits
+  - Legitimate domain management scripts
+level: medium

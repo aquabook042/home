@@ -1,0 +1,43 @@
+title: "The Gentlemen - Privileged Domain Account Creation via net.exe"
+id: a1b2c3d4-0002-0004-0002-000000000002
+status: experimental
+description: |
+  Detects creation of new domain accounts or addition to the Domain Admins group via net.exe,
+  a persistence technique used by The Gentlemen ransomware group after gaining access
+  via compromised FortiGate VPN credentials (ADS-002 / T1078.002).
+  Targeted commands:
+    net user <name> <pass> /add /domain
+    net group "Domain Admins" <name> /add /domain
+references:
+  - https://attack.mitre.org/techniques/T1078/002
+  - https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html
+  - https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/
+author: "Claude (ADS-002 auto-generated)"
+date: 2026-06-26
+tags:
+  - attack.persistence
+  - attack.privilege_escalation
+  - attack.t1078.002
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection_img:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+  selection_add_domain_user:
+    CommandLine|contains|all:
+      - 'user'
+      - '/add'
+      - '/domain'
+  selection_add_domain_admin:
+    CommandLine|contains|all:
+      - 'group'
+      - 'Domain Admins'
+      - '/add'
+      - '/domain'
+  condition: selection_img and (selection_add_domain_user or selection_add_domain_admin)
+falsepositives:
+  - Legitimate IT provisioning scripts that use net.exe for domain account creation
+level: high
