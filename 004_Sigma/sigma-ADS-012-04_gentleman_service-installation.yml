@@ -1,0 +1,34 @@
+title: Gentlemen Ransomware - New Service Installation for Self-Propagation
+id: a1b2c3d4-0012-0004-0012-000000000012
+status: experimental
+description: |
+  Detects new service installation (EventID 7045) which may indicate The Gentlemen
+  ransomware's self-propagation mechanism over SMB. The ransomware installs services
+  on remote hosts as part of its lateral movement and self-spreading capability.
+  Correlate with SMB network connections and file encryption events.
+references:
+  - https://attack.mitre.org/techniques/T1486
+  - https://attack.mitre.org/techniques/T1021/002
+  - https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps
+author: Claude (ADS-012 auto-generated)
+date: 2026-06-26
+tags:
+  - attack.impact
+  - attack.t1486
+  - attack.lateral_movement
+  - attack.t1021.002
+logsource:
+  product: windows
+  service: system
+detection:
+  selection:
+    EventID: 7045
+    ServiceFileName|contains:
+      - 'gentlemen'
+      - 'NETLOGON'
+      - '.7mtzhh'
+      - '.ojuopo'
+  condition: selection
+falsepositives:
+  - Legitimate software installations (review service name and path)
+level: high

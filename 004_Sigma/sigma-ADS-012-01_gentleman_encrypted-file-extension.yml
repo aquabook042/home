@@ -1,0 +1,30 @@
+title: Gentlemen Ransomware - Encrypted File Extension Detection
+id: a1b2c3d4-0012-0001-0012-000000000012
+status: experimental
+description: |
+  Detects file creation events with extensions known to be appended by The Gentlemen
+  ransomware (.7mtzhh or .ojuopo). These extensions indicate active ransomware
+  encryption of victim files. Golang-based cross-platform ransomware deployed
+  via GPO/NETLOGON affecting Windows, Linux, ESXi, NAS, and BSD platforms.
+references:
+  - https://attack.mitre.org/techniques/T1486
+  - https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html
+  - https://www.huntress.com/blog/the-gentlemen-ransomware-defense-evasion-ttps
+  - https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/
+author: Claude (ADS-012 auto-generated)
+date: 2026-06-26
+tags:
+  - attack.impact
+  - attack.t1486
+logsource:
+  product: windows
+  category: file_event
+detection:
+  selection:
+    TargetFilename|endswith:
+      - '.7mtzhh'
+      - '.ojuopo'
+  condition: selection
+falsepositives:
+  - None expected - these extensions are unique to The Gentlemen ransomware
+level: critical

@@ -1,0 +1,30 @@
+title: Gentlemen Ransomware - Mass File Modification Behavioral Detection
+id: a1b2c3d4-0012-0005-0012-000000000012
+status: experimental
+description: |
+  Detects mass file rename/modification events within a short timeframe, indicative
+  of The Gentlemen ransomware's encryption activity. The ransomware recursively
+  scans and encrypts files, generating a high volume of file system events.
+  Trigger threshold: >100 file rename events within 60 seconds.
+  NOTE: This rule requires aggregation support in the SIEM and may need tuning
+  for environment-specific baseline file modification rates.
+references:
+  - https://attack.mitre.org/techniques/T1486
+  - https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/
+author: Claude (ADS-012 auto-generated)
+date: 2026-06-26
+tags:
+  - attack.impact
+  - attack.t1486
+logsource:
+  product: windows
+  category: file_event
+detection:
+  selection:
+    EventType: 'RenameNewName'
+  timeframe: 60s
+  condition: selection | count() > 100
+falsepositives:
+  - Bulk file operations by backup software or legitimate admin tools
+  - Large file migration or reorganization tasks
+level: high

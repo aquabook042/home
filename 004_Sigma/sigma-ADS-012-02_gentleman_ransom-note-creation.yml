@@ -1,0 +1,26 @@
+title: Gentlemen Ransomware - Ransom Note Creation
+id: a1b2c3d4-0012-0002-0012-000000000012
+status: experimental
+description: |
+  Detects creation of README-GENTLEMEN.txt, the ransom note dropped by The Gentlemen
+  ransomware in every encrypted directory. This file is a definitive indicator of
+  active ransomware infection. Contains victim ID and TOX contact for negotiation.
+references:
+  - https://attack.mitre.org/techniques/T1486
+  - https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html
+  - https://www.group-ib.com/blog/hastalamuerte-gentlemen-raas-ttps/
+author: Claude (ADS-012 auto-generated)
+date: 2026-06-26
+tags:
+  - attack.impact
+  - attack.t1486
+logsource:
+  product: windows
+  category: file_event
+detection:
+  selection:
+    TargetFilename|endswith: '\README-GENTLEMEN.txt'
+  condition: selection
+falsepositives:
+  - None expected
+level: critical
