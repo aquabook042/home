@@ -1,0 +1,29 @@
+title: "The Gentlemen - Account Added to Domain Admins Group"
+id: a1b2c3d4-0002-0002-0002-000000000002
+status: experimental
+description: |
+  Detects when a user account is added to the Domain Admins security group (EventID 4728).
+  The Gentlemen ransomware group adds newly created accounts to Domain Admins for
+  persistent privileged access following FortiGate VPN credential harvesting (ADS-002 / T1078.002).
+references:
+  - https://attack.mitre.org/techniques/T1078/002
+  - https://www.trendmicro.com/en_us/research/25/i/unmasking-the-gentlemen-ransomware.html
+  - https://www.microsoft.com/en-us/security/blog/2026/05/28/the-gentlemen-ransomware-dissecting-a-self-propagating-go-encryptor/
+author: "Claude (ADS-002 auto-generated)"
+date: 2026-06-26
+tags:
+  - attack.persistence
+  - attack.privilege_escalation
+  - attack.t1078.002
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 4728
+    TargetUserName: 'Domain Admins'
+  condition: selection
+falsepositives:
+  - Legitimate IT administrator provisioning
+  - Scheduled privileged access review workflows
+level: critical
